@@ -82,6 +82,27 @@ class MockRedis
       result
     end
 
+    def xgroup(subcommand, key, group, id_or_consumer = nil, mkstream: false)
+      case subcommand
+      when :create
+        raise Redis::CommandError.new("Exception: BUSYGROUP Consumer Group name already exists") if data[key].exists?
+        data[key] = Stream.new if mkstream
+        with_stream_at(key) do |stream|
+          stream.add_group(group)
+        end
+      # when :setid
+      # when :destroy
+      # when :delconsumer
+      end
+    end
+
+    def xreadgroup(group, consumer, keys, ids, count: nil, block: nil, noack: nil)
+      
+    end
+
+    def xack(key, group, *ids)
+    end
+
     private
 
     def with_stream_at(key, &blk)

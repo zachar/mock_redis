@@ -8,12 +8,13 @@ class MockRedis
     include Enumerable
     extend Forwardable
 
-    attr_accessor :members
+    attr_accessor :members, :groups
 
     def_delegators :members, :empty?
 
     def initialize
       @members = Set.new
+      @groups = Set.new
       @last_id = nil
     end
 
@@ -73,6 +74,10 @@ class MockRedis
 
     def each
       members.each { |m| yield m }
+    end
+
+    def add_group(group)
+      @groups << Group.new(group)
     end
 
     private
