@@ -96,8 +96,29 @@ class MockRedis
       end
     end
 
-    def xreadgroup(group, consumer, keys, ids, count: nil, block: nil, noack: nil)
-      
+    def xreadgroup(group_name, consumer, keys, ids, count: nil, block: nil, noack: nil)
+      args = []
+      args += ['COUNT', count] if count
+      args += ['BLOCK', block.to_i] if block
+      result = {}
+      keys = keys.is_a?(Array) ? keys : [keys]
+      ids = ids.is_a?(Array) ? ids : [ids]
+      keys.each_with_index do |key, index|
+        with_stream_at(key, group_name) do |stream|
+          group = stream.groups.find { _1.name === group_name }
+          unless group
+            raise Redis::CommandError,
+              "NOGROUP No such key '#{key}' or consumer group '#{group_name}' in XREADGROUP with GROUP option"
+          end
+
+          data = stream.read(ids[index], *args)
+          unless data.empty?
+            result[key] = data
+            group.pending_entries_list.add *data.map(&:first) unless noack
+          end
+        end
+      end
+      result
     end
 
     def xack(key, group, *ids)

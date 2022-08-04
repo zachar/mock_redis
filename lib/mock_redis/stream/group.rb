@@ -1,6 +1,8 @@
 class MockRedis
   class Stream
     class Group
+      attr_reader :name
+
       def initialize(group)
         @name = group
         @consumers = Set.new
